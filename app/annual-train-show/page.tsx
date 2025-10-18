@@ -47,7 +47,7 @@ export default function AnnualTrainShowPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold">Scenes From Last Year's Show</h2>
+        <h2 className="text-2xl font-semibold">Scenes From Last Year{"'"}s Show</h2>
         <div className="mt-6">
           <LightboxGallery items={gallery} />
         </div>
@@ -60,7 +60,7 @@ export default function AnnualTrainShowPage() {
           <a href="mailto:topekamodelrailroaders@gmail.com" className="text-blue-600 hover:underline">
             topekamodelrailroaders@gmail.com
           </a>{" "}
-          and we'll follow up with table rates, setup details, and the vendor packet.
+          and we{"'"}ll follow up with table rates, setup details, and the vendor packet.
         </p>
       </section>
     </div>

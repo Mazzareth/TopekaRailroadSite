@@ -12,7 +12,10 @@ import photo4 from "./images/72479297007-20240203-n-trak-model-trains-en-1.webp"
 import photo5 from "./images/IMG_20251017_190103.webp";
 import photo6 from "./images/IMG_20251017_190156.webp";
 
-type LightboxImage = { src: any; alt: string };
+type LightboxImage = {
+  src: Parameters<typeof Image>[0]["src"];
+  alt: string;
+};
 
 function getNthWeekday(
   year: number,

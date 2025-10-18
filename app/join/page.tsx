@@ -34,8 +34,8 @@ export default function JoinPage() {
           <div>
             <h2 className="text-2xl font-semibold">How to Become a Member</h2>
             <p className="mt-2 text-foreground/80">
-              The best way to start is by coming to one of our meetings! Introduce yourself and see what we're all about.
-              We'll share details about dues and the application process in person.
+              The best way to start is by coming to one of our meetings! Introduce yourself and see what we{"'"}re all about.
+              We{"'"}ll share details about dues and the application process in person.
             </p>
           </div>
 

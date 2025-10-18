@@ -28,7 +28,7 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold">We're Proudly Supported By</h2>
+        <h2 className="text-2xl font-semibold">We{"'"}re Proudly Supported By</h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           <li className="rounded-lg border border-black/10 dark:border-white/10 p-4">Topeka Parks & Recreation</li>
           <li className="rounded-lg border border-black/10 dark:border-white/10 p-4">Great Overland Station</li>
