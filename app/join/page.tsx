@@ -1,10 +1,19 @@
 "use client";
+
 import { useState } from "react";
+
+const benefits = [
+  "Share knowledge and learn from experienced modelers.",
+  "Access club layouts, work sessions, and operating conversations.",
+  "Participate in public events, shows, and display opportunities.",
+  "Make friends and enjoy the hobby with a welcoming local community.",
+];
 
 export default function JoinPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const subject = `Inquiry from ${name || "Prospective Member"}`;
@@ -13,86 +22,90 @@ export default function JoinPage() {
   };
 
   return (
-    <div className="py-10 space-y-10">
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold">Join Us</h1>
-        <p className="mt-3 text-foreground/80">Become part of a community of model railroaders in Topeka.</p>
+    <div className="space-y-8 py-8 md:space-y-10 md:py-10">
+      <header className="panel rounded-[1.75rem] p-8 md:p-10">
+        <span className="eyebrow">Join the club</span>
+        <h1 className="mt-5 text-4xl font-bold tracking-tight text-white md:text-5xl">Step into a community that loves building railroad worlds.</h1>
+        <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300/80 md:text-lg">
+          We redesigned this page to feel more personal and encouraging, with a clearer explanation of why membership matters
+          and an easier contact path for prospective members.
+        </p>
       </header>
 
-      <section className="grid md:grid-cols-2 gap-8">
+      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-semibold">Why Join?</h2>
-            <ul className="mt-2 list-disc pl-5 text-foreground/80 space-y-1">
-              <li>Share knowledge and learn from others</li>
-              <li>Access to club layouts and work sessions</li>
-              <li>Participate in events and public displays</li>
-              <li>Make friends and enjoy the hobby together</li>
+          <article className="panel rounded-[1.5rem] p-8">
+            <h2 className="text-2xl font-semibold text-white">Why join?</h2>
+            <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-300/80">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                  {benefit}
+                </li>
+              ))}
             </ul>
-          </div>
+          </article>
 
-          <div>
-            <h2 className="text-2xl font-semibold">How to Become a Member</h2>
-            <p className="mt-2 text-foreground/80">
-              The best way to start is by coming to one of our meetings! Introduce yourself and see what we{"'"}re all about.
-              We{"'"}ll share details about dues and the application process in person.
+          <article className="panel rounded-[1.5rem] p-8">
+            <h2 className="text-2xl font-semibold text-white">How to become a member</h2>
+            <p className="mt-4 text-base leading-7 text-slate-300/80">
+              The best first step is to attend a meeting, introduce yourself, and see the club in action.
+              Members can share information about dues, projects, and how you can plug in right away.
             </p>
-          </div>
+          </article>
 
-          <div>
-            <h2 className="text-2xl font-semibold">Contact Information</h2>
-            <ul className="mt-2 text-foreground/80">
+          <article className="panel rounded-[1.5rem] p-8">
+            <h2 className="text-2xl font-semibold text-white">Contact information</h2>
+            <ul className="mt-4 space-y-3 text-slate-300/80">
               <li>
-                Email: <a href="mailto:topekamodelrailroaders@gmail.com" className="text-blue-600 hover:underline">topekamodelrailroaders@gmail.com</a>
+                Email: <a href="mailto:topekamodelrailroaders@gmail.com" className="text-sky-300 hover:text-white hover:underline">topekamodelrailroaders@gmail.com</a>
               </li>
               <li>
-                Facebook: <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Visit our Facebook Page</a>
+                Facebook: <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:text-white hover:underline">Visit our Facebook page</a>
               </li>
             </ul>
-          </div>
+          </article>
         </div>
 
-        <form onSubmit={onSubmit} className="rounded-xl border border-black/10 dark:border-white/10 p-6 bg-white/50 dark:bg-white/5">
-          <h2 className="text-xl font-semibold">Contact Form</h2>
-          <div className="mt-4 space-y-4">
+        <form onSubmit={onSubmit} className="panel rounded-[1.75rem] p-8 md:p-10">
+          <h2 className="text-2xl font-semibold text-white">Send a membership inquiry</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-300/80">
+            Tell the club a little about yourself and your interests. Submitting opens your email client with a pre-filled message.
+          </p>
+          <div className="mt-6 space-y-5">
             <div>
-              <label className="block text-sm font-medium">Name</label>
+              <label className="block text-sm font-medium text-slate-200">Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-black/10 dark:border-white/10 bg-transparent px-3 py-2"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-sky-300/60"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Email</label>
+              <label className="block text-sm font-medium text-slate-200">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-black/10 dark:border-white/10 bg-transparent px-3 py-2"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-sky-300/60"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Message</label>
+              <label className="block text-sm font-medium text-slate-200">Message</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={5}
-                className="mt-1 w-full rounded-md border border-black/10 dark:border-white/10 bg-transparent px-3 py-2"
+                rows={6}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-sky-300/60"
                 required
               />
             </div>
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-full bg-blue-600 text-white px-6 py-3 hover:bg-blue-700"
-            >
-              Send Inquiry
+            <button type="submit" className="button-primary w-full sm:w-auto">
+              Send inquiry
             </button>
           </div>
-          <p className="mt-3 text-xs text-foreground/60">Submitting opens your email client with a pre-filled message.</p>
         </form>
       </section>
     </div>
