@@ -24,7 +24,7 @@ function getNthWeekday(
   nth: number
 ) {
   const first = new Date(year, monthZeroIndexed, 1);
-  const firstWeekday = first.getDay(); // 0=Sun..6=Sat
+  const firstWeekday = first.getDay();
   const offset = (weekday - firstWeekday + 7) % 7;
   const day = 1 + offset + 7 * (nth - 1);
   return new Date(year, monthZeroIndexed, day);
@@ -32,9 +32,9 @@ function getNthWeekday(
 
 function nextMeetingDate(now = new Date()) {
   const tryMonth = (y: number, m: number) => {
-    const nth = m === 0 || m === 1 ? 2 : 3; // Jan/Feb => 2nd Monday, else 3rd Monday
-    const d = getNthWeekday(y, m, 1, nth); // Monday = 1
-    d.setHours(19, 0, 0, 0); // 7:00 PM
+    const nth = m === 0 || m === 1 ? 2 : 3;
+    const d = getNthWeekday(y, m, 1, nth);
+    d.setHours(19, 0, 0, 0);
     return d;
   };
   const y0 = now.getFullYear();
@@ -47,6 +47,39 @@ function nextMeetingDate(now = new Date()) {
   }
   return tryMonth(y0, m0);
 }
+
+const highlights = [
+  {
+    value: "40+",
+    label: "Years of local railroad history and hands-on craftsmanship.",
+  },
+  {
+    value: "12 mo.",
+    label: "Year-round meetings, build nights, and public engagement.",
+  },
+  {
+    value: "All skill levels",
+    label: "From first-time hobbyists to layout veterans, everyone fits in.",
+  },
+];
+
+const features = [
+  {
+    title: "Immersive layouts",
+    description:
+      "Detailed scenes, realistic weathering, and constantly evolving operations make every visit feel alive.",
+  },
+  {
+    title: "Events with momentum",
+    description:
+      "Public train shows, swap meets, and demonstrations create fresh reasons to come back and bring friends.",
+  },
+  {
+    title: "A welcoming club culture",
+    description:
+      "Learn wiring, scenery, operations, and storytelling from members who love sharing the craft.",
+  },
+];
 
 export default function Home() {
   const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
@@ -72,93 +105,158 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col gap-16">
-      <section className="relative isolate overflow-hidden rounded-2xl bg-black text-white">
-        <div className="relative h-[60svh] md:h-[70svh]">
+    <div className="flex flex-col gap-10 pb-4 md:gap-16">
+      <section className="panel relative isolate overflow-hidden rounded-[2rem]">
+        <div className="absolute inset-0">
           <Image
             src={hero}
             alt="Model railroad layout in Old Town scene"
             fill
             priority
-            className="object-cover opacity-80"
+            className="object-cover opacity-35"
             placeholder="blur"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
-          <div className="relative z-10 h-full flex items-center">
-            <div className="max-w-3xl px-6">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                Topeka Model Railroaders
-              </h1>
-              <p className="mt-4 text-lg md:text-xl text-white/90">
-                Promoting the hobby of model railroading in Topeka, Kansas
-                since 1983.
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.3),transparent_30%),linear-gradient(135deg,rgba(2,6,23,0.45),rgba(2,6,23,0.88))]" />
+        </div>
+
+        <div className="relative z-10 grid gap-10 px-6 py-10 md:grid-cols-[1.3fr_0.9fr] md:px-10 md:py-14 xl:px-14 xl:py-16">
+          <div className="max-w-3xl">
+            <span className="eyebrow">Kansas railroading, reimagined</span>
+            <h1 className="section-title mt-6 text-white">
+              A more cinematic home for Topeka&apos;s model railroad community.
+            </h1>
+            <p className="section-subtitle mt-6">
+              We gave the site a richer sense of atmosphere with layered visuals, stronger content hierarchy,
+              and a more inviting path into events, membership, and club life.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="#experience" className="button-primary">
+                Explore the experience
+              </Link>
+              <Link href="/join" className="button-secondary">
+                Start your membership journey
+              </Link>
+            </div>
+            <div className="info-grid mt-10">
+              {highlights.map((item) => (
+                <div key={item.value} className="rounded-3xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
+                  <p className="text-2xl font-semibold text-white">{item.value}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-200/78">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 self-end">
+            <div className="rounded-[1.75rem] border border-sky-300/20 bg-slate-950/70 p-6 shadow-2xl shadow-sky-950/25 backdrop-blur">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-200">Next meeting</p>
+              <p className="mt-4 text-2xl font-semibold text-white">{meeting.date}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300/80">
+                7:00 PM in Marvin Room 101B at the Topeka / Shawnee County Public Library.
               </p>
-              <div className="mt-8 flex gap-4">
-                <Link
-                  href="#upcoming"
-                  className="inline-flex items-center rounded-full bg-blue-600 text-white px-5 py-2.5 hover:bg-blue-700"
-                >
-                  Upcoming Events
-                </Link>
-                <Link
-                  href="/join"
-                  className="inline-flex items-center rounded-full bg-white/10 ring-1 ring-inset ring-white/30 text-white px-5 py-2.5 hover:bg-white/20"
-                >
-                  Learn About Membership
-                </Link>
-              </div>
+              <Link href="/meetings-events" className="button-secondary mt-5">
+                View meetings & events
+              </Link>
+            </div>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6 backdrop-blur-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Featured event</p>
+              <h2 className="mt-3 text-xl font-semibold text-white">4th Annual Train Show & Swap Meet</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-200/80">
+                Great Overland Station • October 4, 2025 from 9 AM to 5 PM and October 5, 2025 from 9 AM to 3 PM.
+              </p>
+              <Link href="/annual-train-show" className="button-primary mt-5">
+                See full event details
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="upcoming" className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-black/10 dark:border-white/10 p-6 bg-white/50 dark:bg-white/5">
-          <h2 className="text-xl font-semibold">Join Us at Our Next Event!</h2>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">
-              4th Annual Train Show & Swap Meet
-            </h3>
-            <p className="mt-2 text-sm text-foreground/80">
-              October 4, 2025 (9 AM – 5 PM) & October 5, 2025 (9 AM – 3 PM)
-            </p>
-            <p className="text-sm text-foreground/80">
-              Great Overland Station, 701 N Kansas Ave, Topeka, KS
-            </p>
-            <Link
-              href="/annual-train-show"
-              className="mt-4 inline-flex items-center rounded-full bg-blue-600 text-white px-4 py-2 hover:bg-blue-700"
-            >
-              View Event Details
-            </Link>
+      <section id="experience" className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="panel rounded-[1.75rem] p-8 md:p-10">
+          <span className="eyebrow">Why it feels different</span>
+          <h2 className="mt-5 text-3xl font-semibold text-white md:text-4xl">
+            A homepage with movement, depth, and room to breathe.
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300/80">
+            Instead of looking like a simple brochure, the site now leads with a stronger visual story and
+            polished content blocks that make events, club benefits, and member activity feel front-and-center.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {features.map((feature) => (
+            <article key={feature.title} className="panel rounded-[1.5rem] p-6">
+              <div className="h-11 w-11 rounded-2xl bg-sky-400/15 ring-1 ring-sky-300/25" />
+              <h3 className="mt-5 text-xl font-semibold text-white">{feature.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-300/78">{feature.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="panel rounded-[1.75rem] p-8 md:p-10">
+          <span className="eyebrow">Club spotlight</span>
+          <h2 className="mt-5 text-3xl font-semibold text-white md:text-4xl">Built for hobbyists, families, and future members.</h2>
+          <div className="mt-6 grid gap-4 text-sm leading-6 text-slate-300/80 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              Learn operations, scenery, wiring, rolling stock maintenance, and layout planning in a collaborative environment.
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              Discover public-facing events that turn the club into a destination for local families and railfans.
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              The refreshed structure creates clearer pathways to meeting details, joining information, and show announcements.
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              Photo-forward storytelling gives the organization a more premium, memorable identity on Vercel.
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-black/10 dark:border-white/10 p-6 bg-white/50 dark:bg-white/5">
-          <h3 className="text-lg font-semibold">Next Meeting</h3>
-          <p className="mt-2 text-sm text-foreground/80">
-            Our next meeting is {meeting.date} at 7:00 PM in the Marvin Room
-            101B at the Topeka/Shawnee Co. Public Library.
-          </p>
-          <Link
-            href="/meetings-events"
-            className="mt-4 inline-flex items-center rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-4 py-2 hover:opacity-90"
-          >
-            See Meetings & Events
-          </Link>
+        <div className="panel rounded-[1.75rem] p-8 md:p-10">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <span className="eyebrow">Fast access</span>
+              <h2 className="mt-4 text-2xl font-semibold text-white">Plan your first visit</h2>
+            </div>
+          </div>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-300/60">Meetings</p>
+              <p className="mt-2 text-base text-white">2nd Monday in January and February, 3rd Monday from March through December.</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-300/60">Location</p>
+              <p className="mt-2 text-base text-white">Topeka / Shawnee County Public Library, Marvin Room 101B.</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/6 p-5">
+              <p className="text-sm uppercase tracking-[0.18em] text-slate-300/60">Best next step</p>
+              <p className="mt-2 text-base text-white">Come to a meeting, meet the crew, and ask about dues and active projects.</p>
+            </div>
+          </div>
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold">A Glimpse of Our World</h2>
-        <p className="mt-2 text-foreground/80">
-          Highlights from our layouts, events, and members in action.
-        </p>
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="eyebrow">Gallery preview</span>
+            <h2 className="mt-4 text-3xl font-semibold text-white md:text-4xl">A more immersive glimpse of the railroad world</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300/80 md:text-base">
+              Highlights from club layouts, member moments, and the scenes that give the railroad its character.
+            </p>
+          </div>
+          <Link href="/gallery" className="button-secondary w-fit">
+            Open full gallery
+          </Link>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
           {photos.map((p, i) => (
             <button
               key={i}
-              className="relative aspect-[4/3] overflow-hidden rounded-lg ring-1 ring-black/10 dark:ring-white/10 group"
+              className="group relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950/60"
               onClick={() => setLightbox(p)}
               aria-label={`View larger: ${p.alt}`}
             >
@@ -167,28 +265,26 @@ export default function Home() {
                 alt={p.alt}
                 fill
                 sizes="(max-width: 768px) 50vw, 33vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="object-cover transition duration-500 group-hover:scale-105 group-hover:opacity-100"
                 placeholder="blur"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/0 to-transparent opacity-70 transition group-hover:opacity-40" />
             </button>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl bg-blue-50 dark:bg-blue-950/30 p-8">
-        <div className="md:flex items-center justify-between gap-6">
+      <section className="panel rounded-[1.75rem] px-8 py-10 md:px-10 md:py-12">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">Interested in Joining?</h2>
-            <p className="mt-2 text-foreground/80">
-              We welcome all skill levels, from beginners to seasoned experts.
-              Learn more about our community and how you can become a member.
+            <span className="eyebrow">Ready to hop aboard?</span>
+            <h2 className="mt-4 text-3xl font-semibold text-white md:text-4xl">Join a club where the layouts keep evolving.</h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300/80">
+              Whether you love operations, scenery, electronics, or simply seeing trains run, there&apos;s a place for you here.
             </p>
           </div>
-          <Link
-            href="/join"
-            className="mt-4 md:mt-0 inline-flex items-center rounded-full bg-blue-600 text-white px-6 py-3 hover:bg-blue-700"
-          >
-            Learn About Membership
+          <Link href="/join" className="button-primary w-fit">
+            Learn about membership
           </Link>
         </div>
       </section>
@@ -197,29 +293,19 @@ export default function Home() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
           onClick={() => setLightbox(null)}
         >
-          <div
-            className="relative max-w-5xl w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
             <button
-              className="absolute -top-10 right-0 md:top-0 md:-right-10 text-white/80 hover:text-white"
+              className="absolute -top-12 right-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/20"
               onClick={() => setLightbox(null)}
               aria-label="Close"
             >
               ✕
             </button>
-            <div className="relative w-full aspect-[4/3]">
-              <Image
-                src={lightbox.src}
-                alt={lightbox.alt}
-                fill
-                className="object-contain"
-                sizes="100vw"
-                priority
-              />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950">
+              <Image src={lightbox.src} alt={lightbox.alt} fill className="object-contain" sizes="100vw" priority />
             </div>
           </div>
         </div>
