@@ -21,15 +21,20 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 30%),
-    linear-gradient(180deg, #07101d 0%, #08111f 38%, #0f172a 100%);
+    radial-gradient(circle at top, rgba(125, 211, 252, 0.16), transparent 30%),
+    linear-gradient(180deg, #09111d 0%, #0d1725 45%, #111c2c 100%);
   color: var(--foreground);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 a {
   transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease,
-    transform 150ms ease, opacity 150ms ease;
+    transform 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: none;
 }
 
 .page-shell {
@@ -141,4 +146,12 @@ a {
   .info-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+
+.soft-card {
+  border: 1px solid rgba(186, 230, 253, 0.16);
+  background: rgba(8, 17, 31, 0.72);
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.2);
+  backdrop-filter: blur(12px);
 }
