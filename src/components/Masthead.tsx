@@ -1,20 +1,26 @@
 import Link from "next/link";
 import { TrainBand } from "./TrainBand";
 
-export function Masthead() {
+type MastheadProps = {
+  volume?: string;
+  established?: string;
+  tagline?: string;
+};
+
+export function Masthead({ volume, established, tagline }: MastheadProps) {
   return (
     <header className="masthead">
       <div className="wrap">
         <div className="topbar">
-          <span>Vol. <span className="ph">Volume No.</span> &middot; No. <span className="ph">Issue No.</span></span>
-          <span>Est. <span className="ph">Year</span> &middot; Topeka, Kansas</span>
+          <span>{volume ? `Vol. ${volume}` : "Topeka Model Railroaders"}</span>
+          <span>{established ? `Est. ${established} · Topeka, Kansas` : "Topeka, Kansas"}</span>
           <span>All Gauges Welcome</span>
         </div>
 
         <div className="plate">
           <div className="sub1">— The —</div>
           <h1>Topeka <em>Model</em> Railroaders</h1>
-          <div className="sub2">a friendly gathering of hobbyists, tinkerers &amp; track-layers</div>
+          <div className="sub2">{tagline || "a friendly gathering of hobbyists, tinkerers & track-layers"}</div>
         </div>
 
         <div className="rulebar">

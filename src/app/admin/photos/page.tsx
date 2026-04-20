@@ -1,31 +1,121 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { firebaseStorage } from "@/lib/firebase/client";
+
+type Photo = { id: string; url: string; caption: string; order: number };
+
 export default function AdminPhotosPage() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const dragId = useRef<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const r = await fetch("/api/photos");
+    setPhotos(await r.json());
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleFiles(files: FileList) {
+    setUploading(true);
+    setMsg("");
+    for (const file of Array.from(files)) {
+      try {
+        const sRef = storageRef(firebaseStorage, `gallery/${Date.now()}-${file.name}`);
+        await uploadBytes(sRef, file);
+        const url = await getDownloadURL(sRef);
+        await fetch("/api/photos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+      } catch {
+        setMsg("One or more uploads failed.");
+      }
+    }
+    setUploading(false);
+    load();
+  }
+
+  async function del(id: string) {
+    if (!confirm("Remove this photo?")) return;
+    await fetch(`/api/photos/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  function onDragStart(id: string) { dragId.current = id; }
+
+  async function onDrop(targetId: string) {
+    if (!dragId.current || dragId.current === targetId) return;
+    const fromIdx = photos.findIndex((p) => p.id === dragId.current);
+    const toIdx = photos.findIndex((p) => p.id === targetId);
+    const reordered = [...photos];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    setPhotos(reordered);
+    await fetch("/api/photos/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map((p) => p.id) }),
+    });
+    dragId.current = null;
+  }
+
   return (
     <section className="view">
       <h1>Photo Gallery</h1>
       <p className="lede">Upload layout shots, show photos, and workbench snaps. Drag to reorder.</p>
 
-      <div className="uploader" style={{ marginTop: 22 }}>
-        <div className="big">Drop photos here to upload</div>
+      <div
+        className="uploader"
+        style={{ marginTop: 22, cursor: "pointer" }}
+        onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+      >
+        <div className="big">{uploading ? "Uploading…" : "Drop photos here to upload"}</div>
         <div style={{ marginTop: 6, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-soft)" }}>
-          or <a href="#">browse your computer</a> · JPG, PNG · up to 10 MB each
+          or click to browse · JPG, PNG · up to 10 MB each
         </div>
+        <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); }} />
       </div>
 
+      {msg && <p style={{ fontFamily: "monospace", fontSize: 13, color: "var(--burgundy)", marginTop: 12 }}>{msg}</p>}
+
       <div style={{ marginTop: 30, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <div className="eyebrow">Current Gallery · <span className="ph">#</span> photos</div>
+        <div className="eyebrow">Current Gallery · {loading ? "…" : photos.length} photos</div>
         <div className="mono" style={{ fontSize: 12, color: "var(--ink-soft)" }}>
           Drag to reorder · Click × to remove
         </div>
       </div>
 
-      <div className="grid-photos">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="cell">
-            <div className="ph-img">PHOTO {String(i + 1).padStart(2, "0")}</div>
-            <button className="del">×</button>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <p className="mono" style={{ color: "var(--ink-soft)", fontSize: 13, marginTop: 16 }}>Loading…</p>
+      ) : (
+        <div className="grid-photos">
+          {photos.map((p) => (
+            <div
+              key={p.id}
+              className="cell"
+              draggable
+              onDragStart={() => onDragStart(p.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => onDrop(p.id)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.url} alt={p.caption || "Gallery photo"} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <button className="del" onClick={() => del(p.id)}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
