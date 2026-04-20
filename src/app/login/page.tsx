@@ -2,13 +2,33 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { exchangeIdTokenForSession } from "@/lib/clientAuth";
 import { GoogleButton } from "@/components/GoogleButton";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <main className="auth-shell">
+      <div className="auth-card">
+        <div className="eyebrow">Station Master</div>
+        <h1>Sign in</h1>
+        <p className="lede">Loading…</p>
+      </div>
+    </main>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/admin";
