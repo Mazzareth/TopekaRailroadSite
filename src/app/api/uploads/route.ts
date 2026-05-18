@@ -10,6 +10,33 @@ function isUploadFile(value: FormDataEntryValue | null): value is File {
   return typeof File !== "undefined" && value instanceof File;
 }
 
+function uploadErrorResponse(err: unknown) {
+  const code = typeof err === "object" && err && "code" in err ? String(err.code) : "";
+  const message = err instanceof Error ? err.message : "";
+
+  if (code === "404" || /bucket.*does not exist/i.test(message)) {
+    return NextResponse.json(
+      {
+        error:
+          "Firebase Storage is not set up for this project. Create a Storage bucket or set FIREBASE_STORAGE_BUCKET to an existing bucket.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (code === "403" || /permission|forbidden/i.test(message)) {
+    return NextResponse.json(
+      {
+        error:
+          "The Firebase Admin service account does not have permission to write to Storage.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
+}
+
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!canAccessAdmin(user)) {
@@ -37,6 +64,6 @@ export async function POST(req: Request) {
     }
 
     console.error("image upload failed", err);
-    return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
+    return uploadErrorResponse(err);
   }
 }

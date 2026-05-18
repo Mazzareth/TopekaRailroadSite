@@ -24,7 +24,8 @@ npm run dev
    - **Google** (set a support email; no client-side config needed — the web SDK uses the project's default OAuth client)
 2. **Authentication → Settings → Authorized domains**: make sure `localhost` and your deploy domain are listed (they usually are by default).
 3. **Project Settings → General → Your apps**: add a web app, copy the `NEXT_PUBLIC_FIREBASE_*` values into `.env.local`.
-4. **Project Settings → Service accounts → Generate new private key**. Put `project_id`, `client_email`, and `private_key` into `FIREBASE_ADMIN_*`. Keep `\n` line-breaks literal in the private key value.
+4. **Storage → Get started**: create the default Storage bucket. If the bucket name differs from `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, set `FIREBASE_STORAGE_BUCKET` to the real bucket name without `gs://`.
+5. **Project Settings → Service accounts → Generate new private key**. Put `project_id`, `client_email`, and `private_key` into `FIREBASE_ADMIN_*`. Keep `\n` line-breaks literal in the private key value.
 
 ### Promote a user to admin
 After a user has signed up via `/signup`:
