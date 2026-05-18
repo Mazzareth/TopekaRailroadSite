@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { firebaseStorage } from "@/lib/firebase/client";
 
-type Photo = { id: string; url: string; caption: string; order: number };
+type Photo = { id: string; url: string; caption: string; order: number; path?: string };
+type UploadedImage = { url: string; path: string };
+
+async function readError(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => null);
+  return typeof body?.error === "string" ? body.error : fallback;
+}
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -23,24 +27,48 @@ export default function AdminPhotosPage() {
 
   useEffect(() => { load(); }, []);
 
+  async function uploadPhoto(file: File): Promise<void> {
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    uploadForm.append("folder", "gallery");
+
+    const uploadRes = await fetch("/api/uploads", {
+      method: "POST",
+      body: uploadForm,
+    });
+    if (!uploadRes.ok) {
+      throw new Error(await readError(uploadRes, "Image upload failed."));
+    }
+
+    const uploaded = (await uploadRes.json()) as UploadedImage;
+    const saveRes = await fetch("/api/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: uploaded.url, path: uploaded.path }),
+    });
+    if (!saveRes.ok) {
+      throw new Error(await readError(saveRes, "Photo was uploaded but could not be saved."));
+    }
+  }
+
   async function handleFiles(files: FileList) {
     setUploading(true);
     setMsg("");
+    const errors: string[] = [];
+
     for (const file of Array.from(files)) {
       try {
-        const sRef = storageRef(firebaseStorage, `gallery/${Date.now()}-${file.name}`);
-        await uploadBytes(sRef, file);
-        const url = await getDownloadURL(sRef);
-        await fetch("/api/photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
-      } catch {
-        setMsg("One or more uploads failed.");
+        await uploadPhoto(file);
+      } catch (err) {
+        errors.push(err instanceof Error ? err.message : "One or more uploads failed.");
       }
     }
+
+    if (fileRef.current) fileRef.current.value = "";
     setUploading(false);
+    if (errors.length) {
+      setMsg(errors[0]);
+    }
     load();
   }
 

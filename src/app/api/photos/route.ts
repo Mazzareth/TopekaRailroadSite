@@ -16,14 +16,24 @@ export async function POST(req: Request) {
   if (!canAccessAdmin(user)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { url, caption } = await req.json();
+  const { url, caption, path } = await req.json().catch(() => ({ url: null }));
+  if (typeof url !== "string" || !url.trim()) {
+    return NextResponse.json({ error: "Photo URL is required" }, { status: 400 });
+  }
+
   const tail = await adminDb.collection("photos").orderBy("order", "desc").limit(1).get();
   const maxOrder = tail.empty ? 0 : ((tail.docs[0].data().order as number) ?? 0);
-  const docRef = await adminDb.collection("photos").add({
-    url,
-    caption: caption ?? "",
+  const photo: Record<string, unknown> = {
+    url: url.trim(),
+    caption: typeof caption === "string" ? caption : "",
     order: maxOrder + 1,
     createdAt: FieldValue.serverTimestamp(),
-  });
+  };
+
+  if (typeof path === "string" && path.trim()) {
+    photo.path = path.trim();
+  }
+
+  const docRef = await adminDb.collection("photos").add(photo);
   return NextResponse.json({ id: docRef.id });
 }

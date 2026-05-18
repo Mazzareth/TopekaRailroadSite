@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { firebaseStorage } from "@/lib/firebase/client";
 
 type Post = {
   id?: string;
@@ -21,6 +19,13 @@ const BLANK: Omit<Post, "id"> = {
   title: "", author: "", publishDate: "", category: "Build Log",
   featured: false, excerpt: "", body: "", headerImageUrl: "", status: "published",
 };
+
+type UploadedImage = { url: string };
+
+async function readError(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => null);
+  return typeof body?.error === "string" ? body.error : fallback;
+}
 
 const fmtDate = (d: string) => {
   if (!d) return "—";
@@ -76,14 +81,26 @@ export default function AdminBlogPage() {
     if (!editing) return;
     setUploading(true);
     try {
-      const sRef = storageRef(firebaseStorage, `blog/${Date.now()}-${file.name}`);
-      await uploadBytes(sRef, file);
-      const url = await getDownloadURL(sRef);
-      setEditing((prev) => prev ? { ...prev, headerImageUrl: url } : prev);
-    } catch {
-      setMsg("Image upload failed.");
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folder", "blog");
+
+      const uploadRes = await fetch("/api/uploads", {
+        method: "POST",
+        body: form,
+      });
+      if (!uploadRes.ok) {
+        throw new Error(await readError(uploadRes, "Image upload failed."));
+      }
+
+      const uploaded = (await uploadRes.json()) as UploadedImage;
+      setEditing((prev) => prev ? { ...prev, headerImageUrl: uploaded.url } : prev);
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Image upload failed.");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+      setUploading(false);
     }
-    setUploading(false);
   }
 
   function setField(key: keyof Omit<Post, "id">, value: string | boolean) {
