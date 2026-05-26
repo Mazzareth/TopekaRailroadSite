@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { applyEmailGrantToUser } from "@/lib/adminGrants";
 import { adminAuth } from "@/lib/firebase/admin";
 import { SESSION_COOKIE } from "@/lib/auth";
 
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
     // Require a recent sign-in so session cookies can't be minted from stale tokens.
     if (new Date().getTime() / 1000 - decoded.auth_time > 5 * 60) {
       return NextResponse.json({ error: "Recent sign-in required" }, { status: 401 });
+    }
+    if (decoded.email) {
+      await applyEmailGrantToUser(decoded.email, decoded.uid);
     }
 
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {

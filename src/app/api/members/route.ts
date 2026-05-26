@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { applyEmailGrantToUser } from "@/lib/adminGrants";
 import { adminAuth } from "@/lib/firebase/admin";
 
 export const runtime = "nodejs";
@@ -18,8 +19,10 @@ export async function POST(req: NextRequest) {
       password,
       displayName: displayName || undefined,
     });
-    // Default role for self-signup is "member". Admins elevate via set-admin script.
-    await adminAuth.setCustomUserClaims(user.uid, { role: "member" });
+    const grantedRole = await applyEmailGrantToUser(email, user.uid);
+    if (!grantedRole) {
+      await adminAuth.setCustomUserClaims(user.uid, { role: "member" });
+    }
     return NextResponse.json({ uid: user.uid });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Signup failed";

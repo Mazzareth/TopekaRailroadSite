@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { DARK_VISUAL_DEFAULTS, normalizeVisualColors } from "@/lib/visualTheme";
 
 type AddressType = "mailing" | "physical";
@@ -124,6 +124,10 @@ export function SettingsClient({ isAdmin, currentUserName, currentUserEmail }: {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoNotice, setLogoNotice] = useState("");
   const [logoNoticeTone, setLogoNoticeTone] = useState<"success" | "warning" | "error">("success");
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantBusy, setGrantBusy] = useState(false);
+  const [grantNotice, setGrantNotice] = useState("");
+  const [grantNoticeTone, setGrantNoticeTone] = useState<"success" | "warning" | "error">("success");
   const logoFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -206,6 +210,43 @@ export function SettingsClient({ isAdmin, currentUserName, currentUserEmail }: {
     setLogoNotice("Logo removed. Save settings to publish.");
     if (logoFileRef.current) logoFileRef.current.value = "";
   }
+  async function handleGrantAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const email = grantEmail.trim();
+    if (!email) {
+      setGrantNoticeTone("error");
+      setGrantNotice("Enter an email address.");
+      return;
+    }
+
+    setGrantBusy(true);
+    setGrantNotice("");
+    try {
+      const res = await fetch("/api/admin/access-grants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, role: "admin" }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(typeof body?.error === "string" ? body.error : "Unable to update access.");
+      }
+
+      setGrantEmail("");
+      if (body.status === "pending") {
+        setGrantNoticeTone("warning");
+        setGrantNotice(`Pending admin grant saved for ${body.email}. It will apply once the account is created.`);
+      } else {
+        setGrantNoticeTone("success");
+        setGrantNotice(`Admin access applied to ${body.email}. They must sign out and back in.`);
+      }
+    } catch (err) {
+      setGrantNoticeTone("error");
+      setGrantNotice(err instanceof Error ? err.message : "Unable to update access.");
+    } finally {
+      setGrantBusy(false);
+    }
+  }
 
   async function handleSave() {
     setStatus("saving");
@@ -249,9 +290,11 @@ export function SettingsClient({ isAdmin, currentUserName, currentUserEmail }: {
   const m = data.meetings;
   const f = data.footer;
   const v = data.visual;
-  const busy = status === "loading" || status === "saving" || logoUploading;
+  const busy = status === "loading" || status === "saving" || logoUploading || grantBusy;
   const logoNoticeColor =
     logoNoticeTone === "error" ? "var(--burgundy)" : logoNoticeTone === "warning" ? "var(--brass)" : "var(--forest)";
+  const grantNoticeColor =
+    grantNoticeTone === "error" ? "var(--burgundy)" : grantNoticeTone === "warning" ? "var(--brass)" : "var(--forest)";
 
   return (
     <section className="view">
@@ -436,10 +479,29 @@ export function SettingsClient({ isAdmin, currentUserName, currentUserEmail }: {
         <div className="settings-group">
           <span className="tagnum">── 05 ──</span>
           <h3>Editors &amp; Access</h3>
-          <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 10 }}>
-            Elevate an existing Firebase user with <code>npm run set-admin -- user@example.com admin</code>.
-          </p>
-          <table className="tbl" style={{ marginTop: 0 }}>
+          <form onSubmit={handleGrantAdmin} style={{ marginTop: 14 }}>
+            <div className="row-2" style={{ alignItems: "end" }}>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Admin Email</label>
+                <input
+                  type="email"
+                  value={grantEmail}
+                  onChange={(e) => setGrantEmail(e.target.value)}
+                  placeholder="person@example.com"
+                  disabled={busy}
+                />
+              </div>
+              <button type="submit" className="btn brass" disabled={busy}>
+                {grantBusy ? "Granting…" : "Grant Admin Access"}
+              </button>
+            </div>
+            {grantNotice && (
+              <p className="mono" style={{ color: grantNoticeColor, fontSize: 12, margin: "10px 0 0" }}>
+                {grantNotice}
+              </p>
+            )}
+          </form>
+          <table className="tbl" style={{ marginTop: 18 }}>
             <thead>
               <tr><th>Name</th><th>Email</th><th>Role</th></tr>
             </thead>
