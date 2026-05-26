@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fmtEventDateRange, normalizeEventDates } from "@/lib/events";
 
 type Event = {
   id?: string;
   title: string;
   tag: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   location: string;
@@ -15,15 +18,14 @@ type Event = {
 };
 
 const BLANK: Omit<Event, "id"> = {
-  title: "", tag: "Open House", date: "", startTime: "", endTime: "",
+  title: "", tag: "Open House", date: "", startDate: "", endDate: "", startTime: "", endTime: "",
   location: "", description: "", status: "published",
 };
 
-const fmtDate = (d: string) => {
-  if (!d) return "—";
-  const dt = new Date(d + "T12:00:00");
-  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-};
+async function readError(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => null);
+  return typeof body?.error === "string" ? body.error : fallback;
+}
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -35,19 +37,24 @@ export default function AdminEventsPage() {
   async function load() {
     setLoading(true);
     const r = await fetch("/api/events");
-    setEvents(await r.json());
+    const loaded = (await r.json()) as Event[];
+    setEvents(loaded.map((event) => normalizeEventDates(event)));
     setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
   function startNew() { setEditing({ ...BLANK }); setMsg(""); }
-  function startEdit(ev: Event) { setEditing({ ...ev }); setMsg(""); }
+  function startEdit(ev: Event) { setEditing(normalizeEventDates(ev)); setMsg(""); }
 
   async function save(status: "published" | "draft") {
     if (!editing) return;
+    const payload = normalizeEventDates({ ...editing, status });
+    if (payload.startDate && payload.endDate && payload.endDate < payload.startDate) {
+      setMsg("End date cannot be before start date.");
+      return;
+    }
     setSaving(true);
-    const payload = { ...editing, status };
     const r = editing.id
       ? await fetch(`/api/events/${editing.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
       : await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -56,7 +63,7 @@ export default function AdminEventsPage() {
       setEditing(null);
       load();
     } else {
-      setMsg("Save failed — please try again.");
+      setMsg(await readError(r, "Save failed — please try again."));
     }
     setSaving(false);
   }
@@ -68,7 +75,7 @@ export default function AdminEventsPage() {
   }
 
   async function duplicate(ev: Event) {
-    const { id, ...rest } = ev;
+    const { id, ...rest } = normalizeEventDates(ev);
     await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(rest) });
     load();
   }
@@ -87,42 +94,44 @@ export default function AdminEventsPage() {
         <button className="btn" onClick={startNew}>+ New Event</button>
       </div>
 
-      <table className="tbl">
-        <thead>
-          <tr>
-            <th style={{ width: 110 }}>Date</th>
-            <th>Title</th>
-            <th>Location</th>
-            <th style={{ width: 140 }}>Tag</th>
-            <th style={{ width: 110 }}>Status</th>
-            <th style={{ width: 170 }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>Loading…</td></tr>
-          ) : events.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>No events yet — add the first one.</td></tr>
-          ) : events.map((ev) => (
-            <tr key={ev.id}>
-              <td className="mono">{fmtDate(ev.date)}</td>
-              <td>{ev.title}</td>
-              <td>{ev.location}</td>
-              <td>{ev.tag}</td>
-              <td>
-                <span className={`stamp ${ev.status === "draft" ? "brass" : "green"}`} style={{ fontSize: 9, padding: "2px 6px", transform: "rotate(-1deg)" }}>
-                  {ev.status === "draft" ? "Draft" : "Published"}
-                </span>
-              </td>
-              <td className="actions">
-                <a href="#" onClick={(e) => { e.preventDefault(); startEdit(ev); }}>Edit</a>
-                <a href="#" onClick={(e) => { e.preventDefault(); duplicate(ev); }}>Duplicate</a>
-                <a href="#" className="del" onClick={(e) => { e.preventDefault(); del(ev.id!); }}>Delete</a>
-              </td>
+      <div className="table-scroll">
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th style={{ width: 150 }}>Date</th>
+              <th>Title</th>
+              <th>Location</th>
+              <th style={{ width: 140 }}>Tag</th>
+              <th style={{ width: 110 }}>Status</th>
+              <th style={{ width: 170 }}>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>Loading…</td></tr>
+            ) : events.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>No events yet — add the first one.</td></tr>
+            ) : events.map((ev) => (
+              <tr key={ev.id}>
+                <td className="mono">{fmtEventDateRange(ev, true)}</td>
+                <td>{ev.title}</td>
+                <td>{ev.location}</td>
+                <td>{ev.tag}</td>
+                <td>
+                  <span className={`stamp ${ev.status === "draft" ? "brass" : "green"}`} style={{ fontSize: 9, padding: "2px 6px", transform: "rotate(-1deg)" }}>
+                    {ev.status === "draft" ? "Draft" : "Published"}
+                  </span>
+                </td>
+                <td className="actions">
+                  <a href="#" onClick={(e) => { e.preventDefault(); startEdit(ev); }}>Edit</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); duplicate(ev); }}>Duplicate</a>
+                  <a href="#" className="del" onClick={(e) => { e.preventDefault(); del(ev.id!); }}>Delete</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {editing && (
         <div className="settings-group" style={{ marginTop: 40 }}>
@@ -145,8 +154,11 @@ export default function AdminEventsPage() {
             </div>
           </div>
           <div className="row-3">
-            <div className="field"><label>Date</label><input type="date" value={editing.date} onChange={(e) => setField("date", e.target.value)} /></div>
+            <div className="field"><label>Start Date</label><input type="date" value={editing.startDate || editing.date} onChange={(e) => { setField("startDate", e.target.value); setField("date", e.target.value); }} /></div>
+            <div className="field"><label>End Date</label><input type="date" value={editing.endDate || editing.startDate || editing.date} onChange={(e) => setField("endDate", e.target.value)} /></div>
             <div className="field"><label>Start Time</label><input type="time" value={editing.startTime} onChange={(e) => setField("startTime", e.target.value)} /></div>
+          </div>
+          <div className="row-2">
             <div className="field"><label>End Time</label><input type="time" value={editing.endTime} onChange={(e) => setField("endTime", e.target.value)} /></div>
           </div>
           <div className="field">

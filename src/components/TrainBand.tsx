@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "tmr:train";
 const TRAIN_LOGO_WIDTH = 3088;
@@ -25,6 +25,30 @@ const CRANK_OFFSETS = [
   { dx: 20, dy: 20 },
   { dx: 0, dy: 28 },
 ];
+
+type TrainBandProps = {
+  defaultEnabled?: boolean;
+};
+
+function readStoredEnabled(fallback: boolean) {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "1") return true;
+    if (stored === "0") return false;
+  } catch {
+    // ignore -- privacy mode, etc.
+  }
+
+  return fallback;
+}
+
+function writeStoredEnabled(enabled: boolean) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, enabled ? "1" : "0");
+  } catch {
+    // ignore -- privacy mode, etc.
+  }
+}
 
 function pinPoint(wheel: (typeof DRIVER_WHEELS)[number], offset: (typeof CRANK_OFFSETS)[number]) {
   return {
@@ -81,9 +105,27 @@ function AnimatedCrank({ wheel, index }: { wheel: (typeof DRIVER_WHEELS)[number]
   );
 }
 
-function RunningGear() {
+function RunningGear({ paused }: { paused: boolean }) {
+  const motionRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const motion = motionRef.current;
+    if (!motion) return;
+    const motionControls = motion as SVGSVGElement & {
+      pauseAnimations?: () => void;
+      unpauseAnimations?: () => void;
+    };
+
+    if (paused) {
+      motionControls.pauseAnimations?.();
+    } else {
+      motionControls.unpauseAnimations?.();
+    }
+  }, [paused]);
+
   return (
     <svg
+      ref={motionRef}
       className="train-motion"
       viewBox={`0 0 ${TRAIN_LOGO_WIDTH} ${TRAIN_LOGO_HEIGHT}`}
       aria-hidden="true"
@@ -115,46 +157,40 @@ function RunningGear() {
   );
 }
 
-export function TrainBand() {
-  const [on, setOn] = useState(false);
+export function TrainBand({ defaultEnabled = true }: TrainBandProps) {
+  const [enabled, setEnabled] = useState(defaultEnabled);
 
   useEffect(() => {
-    try {
-      setOn(window.localStorage.getItem(STORAGE_KEY) === "1");
-    } catch {
-      // ignore — privacy mode, etc.
-    }
-  }, []);
+    setEnabled(readStoredEnabled(defaultEnabled));
+  }, [defaultEnabled]);
 
   function toggle() {
-    setOn((prev) => {
+    setEnabled((prev) => {
       const next = !prev;
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
-      } catch {}
+      writeStoredEnabled(next);
       return next;
     });
   }
 
+  const trainState = enabled ? "is-running" : "is-paused";
+
   return (
-    <div className="trainband">
+    <div className={`trainband ${trainState}`} data-train-state={enabled ? "running" : "paused"}>
       <button
         type="button"
         className="train-toggle"
-        aria-pressed={on}
-        aria-label={on ? "Stop the scrolling train" : "Run the scrolling train"}
+        aria-pressed={enabled}
+        aria-label={enabled ? "Pause the scrolling train" : "Resume the scrolling train"}
         onClick={toggle}
       >
-        <span className="dot" aria-hidden />
-        {on ? "Stop Train" : "Run Train"}
+        <span className="signal-lamp" aria-hidden />
+        <span>{enabled ? "Pause Train" : "Resume Train"}</span>
       </button>
-      {on && (
-        <div className="train" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="train-art" src="/tmrr-train-logo.png" alt="" width={TRAIN_LOGO_WIDTH} height={TRAIN_LOGO_HEIGHT} />
-          <RunningGear />
-        </div>
-      )}
+      <div className={`train ${trainState}`} aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="train-art" src="/tmrr-train-logo.png" alt="" width={TRAIN_LOGO_WIDTH} height={TRAIN_LOGO_HEIGHT} />
+        <RunningGear paused={!enabled} />
+      </div>
     </div>
   );
 }

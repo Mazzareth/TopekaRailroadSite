@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 type Post = {
   id?: string;
@@ -11,13 +12,14 @@ type Post = {
   featured: boolean;
   excerpt: string;
   body: string;
+  bodyHtml?: string;
   headerImageUrl: string;
   status: "published" | "draft";
 };
 
 const BLANK: Omit<Post, "id"> = {
   title: "", author: "", publishDate: "", category: "Build Log",
-  featured: false, excerpt: "", body: "", headerImageUrl: "", status: "published",
+  featured: false, excerpt: "", body: "", bodyHtml: "", headerImageUrl: "", status: "published",
 };
 
 type UploadedImage = { url: string };
@@ -52,7 +54,7 @@ export default function AdminBlogPage() {
   useEffect(() => { load(); }, []);
 
   function startNew() { setEditing({ ...BLANK }); setMsg(""); }
-  function startEdit(p: Post) { setEditing({ ...p }); setMsg(""); }
+  function startEdit(p: Post) { setEditing({ ...p, body: p.body ?? "", bodyHtml: p.bodyHtml ?? "" }); setMsg(""); }
 
   async function save(status: "published" | "draft") {
     if (!editing) return;
@@ -107,6 +109,10 @@ export default function AdminBlogPage() {
     setEditing((prev) => prev ? { ...prev, [key]: value } : prev);
   }
 
+  function setBody(bodyHtml: string, body: string) {
+    setEditing((prev) => prev ? { ...prev, bodyHtml, body } : prev);
+  }
+
   return (
     <section className="view">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 16 }}>
@@ -117,41 +123,43 @@ export default function AdminBlogPage() {
         <button className="btn" onClick={startNew}>+ New Post</button>
       </div>
 
-      <table className="tbl">
-        <thead>
-          <tr>
-            <th style={{ width: 120 }}>Date</th>
-            <th>Title</th>
-            <th style={{ width: 140 }}>Author</th>
-            <th style={{ width: 130 }}>Category</th>
-            <th style={{ width: 110 }}>Status</th>
-            <th style={{ width: 170 }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>Loading…</td></tr>
-          ) : posts.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>No posts yet — write the first one.</td></tr>
-          ) : posts.map((p) => (
-            <tr key={p.id}>
-              <td className="mono">{fmtDate(p.publishDate)}</td>
-              <td>{p.title}{p.featured && <span className="stamp green" style={{ marginLeft: 8, fontSize: 8, padding: "1px 5px" }}>Featured</span>}</td>
-              <td>{p.author}</td>
-              <td>{p.category}</td>
-              <td>
-                <span className={`stamp ${p.status === "draft" ? "brass" : "green"}`} style={{ fontSize: 9, padding: "2px 6px", transform: "rotate(-1deg)" }}>
-                  {p.status === "draft" ? "Draft" : "Published"}
-                </span>
-              </td>
-              <td className="actions">
-                <a href="#" onClick={(e) => { e.preventDefault(); startEdit(p); }}>Edit</a>
-                <a href="#" className="del" onClick={(e) => { e.preventDefault(); del(p.id!); }}>Delete</a>
-              </td>
+      <div className="table-scroll">
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th style={{ width: 120 }}>Date</th>
+              <th>Title</th>
+              <th style={{ width: 140 }}>Author</th>
+              <th style={{ width: 130 }}>Category</th>
+              <th style={{ width: 110 }}>Status</th>
+              <th style={{ width: 170 }}>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>Loading…</td></tr>
+            ) : posts.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--ink-soft)", padding: 24 }}>No posts yet — write the first one.</td></tr>
+            ) : posts.map((p) => (
+              <tr key={p.id}>
+                <td className="mono">{fmtDate(p.publishDate)}</td>
+                <td>{p.title}{p.featured && <span className="stamp green" style={{ marginLeft: 8, fontSize: 8, padding: "1px 5px" }}>Featured</span>}</td>
+                <td>{p.author}</td>
+                <td>{p.category}</td>
+                <td>
+                  <span className={`stamp ${p.status === "draft" ? "brass" : "green"}`} style={{ fontSize: 9, padding: "2px 6px", transform: "rotate(-1deg)" }}>
+                    {p.status === "draft" ? "Draft" : "Published"}
+                  </span>
+                </td>
+                <td className="actions">
+                  <a href="#" onClick={(e) => { e.preventDefault(); startEdit(p); }}>Edit</a>
+                  <a href="#" className="del" onClick={(e) => { e.preventDefault(); del(p.id!); }}>Delete</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {editing && (
         <div className="settings-group" style={{ marginTop: 40 }}>
@@ -196,8 +204,14 @@ export default function AdminBlogPage() {
           </div>
           <div className="field">
             <label>Body</label>
-            <textarea style={{ minHeight: 220 }} value={editing.body} onChange={(e) => setField("body", e.target.value)} placeholder="Write the full post here. Markdown friendly." />
-            <div className="help">Supports plain text, headings, lists, and image placeholders.</div>
+            <RichTextEditor
+              value={editing.bodyHtml ?? ""}
+              legacyText={editing.body}
+              disabled={saving}
+              onChange={setBody}
+              onError={setMsg}
+            />
+            <div className="help">Use the toolbar for headings, lists, links, images, and styled text.</div>
           </div>
           <div className="field">
             <label>Header Image</label>

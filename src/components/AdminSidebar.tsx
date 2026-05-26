@@ -9,9 +9,10 @@ const LINKS = [
   { href: "/admin", label: "Dashboard", num: "01" },
   { href: "/admin/events", label: "Events", num: "02" },
   { href: "/admin/blog", label: "Blog Posts", num: "03" },
-  { href: "/admin/copy", label: "Site Copy", num: "04" },
-  { href: "/admin/photos", label: "Photos", num: "05" },
-  { href: "/admin/settings", label: "Site Settings", num: "06" },
+  { href: "/admin/board", label: "Board Members", num: "04" },
+  { href: "/admin/copy", label: "Site Copy", num: "05" },
+  { href: "/admin/photos", label: "Photos", num: "06" },
+  { href: "/admin/settings", label: "Site Settings", num: "07" },
 ];
 
 export function AdminSidebar({ name, role }: { name: string; role: string }) {

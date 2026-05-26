@@ -21,42 +21,34 @@ export async function POST(req: Request) {
 
   const ids = (body as { ids?: unknown }).ids;
   if (!Array.isArray(ids)) {
-    return badRequest("Photo IDs must be provided as an array.");
-  }
-
-  if (ids.length === 0) {
-    return badRequest("At least one photo ID is required.");
-  }
-
-  if (ids.length > 500) {
-    return badRequest("Cannot reorder more than 500 photos at once.");
+    return badRequest("Board member IDs must be provided as an array.");
   }
 
   const cleanIds: string[] = [];
   for (const id of ids) {
     if (typeof id !== "string" || !id.trim()) {
-      return badRequest("Every photo ID must be a non-empty string.");
+      return badRequest("Every board member ID must be a non-empty string.");
     }
     cleanIds.push(id.trim());
   }
 
   const uniqueIds = new Set(cleanIds);
   if (uniqueIds.size !== cleanIds.length) {
-    return badRequest("Photo IDs must not contain duplicates.");
+    return badRequest("Board member IDs must not contain duplicates.");
   }
 
-  const collection = adminDb.collection("photos");
+  const collection = adminDb.collection("boardMembers");
   const currentSnap = await collection.get();
   const currentIds = new Set(currentSnap.docs.map((doc) => doc.id));
   const unknownIds = cleanIds.filter((id) => !currentIds.has(id));
   if (unknownIds.length) {
-    return badRequest(`Unknown photo ID${unknownIds.length === 1 ? "" : "s"}: ${unknownIds.join(", ")}.`);
+    return badRequest(`Unknown board member ID${unknownIds.length === 1 ? "" : "s"}: ${unknownIds.join(", ")}.`);
   }
 
   const submittedIds = new Set(cleanIds);
   const missingIds = currentSnap.docs.map((doc) => doc.id).filter((id) => !submittedIds.has(id));
   if (missingIds.length) {
-    return badRequest("Photo list changed before the order could be saved. Refresh and try again.", 409);
+    return badRequest("Board member list changed before the order could be saved. Refresh and try again.", 409);
   }
 
   const batch = adminDb.batch();
@@ -64,5 +56,6 @@ export async function POST(req: Request) {
     batch.update(collection.doc(id), { order: idx + 1 });
   });
   await batch.commit();
+
   return NextResponse.json({ ok: true });
 }

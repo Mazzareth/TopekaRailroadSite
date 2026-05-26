@@ -34,7 +34,18 @@ function downloadUrl(path: string, token: string): string {
   return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${object}?alt=media&token=${token}`;
 }
 
-export async function uploadImageFile(file: File, folder: "blog" | "gallery") {
+export const UPLOAD_FOLDERS = ["blog", "gallery", "board", "brand"] as const;
+
+export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
+
+export async function deleteUploadedFile(path: string | null | undefined): Promise<void> {
+  const cleanPath = typeof path === "string" ? path.trim() : "";
+  if (!cleanPath) return;
+
+  await adminBucket.file(cleanPath).delete({ ignoreNotFound: true });
+}
+
+export async function uploadImageFile(file: File, folder: UploadFolder) {
   if (!file || file.size === 0) {
     throw new UploadValidationError("Choose an image before uploading.");
   }

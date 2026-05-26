@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { canAccessAdmin, getSessionUser } from "@/lib/auth";
-import { uploadImageFile, UploadValidationError } from "@/lib/uploads";
+import { UPLOAD_FOLDERS, uploadImageFile, UploadValidationError, type UploadFolder } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
-const FOLDERS = new Set(["blog", "gallery"]);
+const FOLDERS = new Set<string>(UPLOAD_FOLDERS);
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return typeof File !== "undefined" && value instanceof File;
+}
+
+function isUploadFolder(value: FormDataEntryValue | null): value is UploadFolder {
+  return typeof value === "string" && FOLDERS.has(value);
 }
 
 function uploadErrorResponse(err: unknown) {
@@ -46,10 +50,7 @@ export async function POST(req: Request) {
   const form = await req.formData();
   const file = form.get("file");
   const requestedFolder = form.get("folder");
-  const folder =
-    typeof requestedFolder === "string" && FOLDERS.has(requestedFolder)
-      ? (requestedFolder as "blog" | "gallery")
-      : "gallery";
+  const folder = isUploadFolder(requestedFolder) ? requestedFolder : "gallery";
 
   if (!isUploadFile(file)) {
     return NextResponse.json({ error: "Missing image file" }, { status: 400 });
